@@ -1,30 +1,28 @@
 <img src="assets/images/metronome.png" alt="Metronome">
 
-<p>A minimal Expo template to create a LightOS-inspired app.</p>
+<p>A minimal metronome app for the Light Phone 3.</p>
 
-> [!NOTE]
-> This is very much a WIP. There's a lot of things I want to add but it'll take me a bit of time :)
+## Setup
 
-## Quick Start
+```bash
+# Enter development shell (if you're running Nix)
+nix develop
+```
 
-1. Update `app.json` with your app name, slug, and package name
-3. Run `bunx expo run:android`
+```bash
+bun install
+bunx expo run:android
+```
 
 ## Commands
 
 ```bash
-bunx expo run:android  # Build and run (dev)
-eas build -p android --profile production --local  # Build APK locally
-bun run sync-version   # Sync version across files
-bun run generate-icon  # Generate icon from app name
+bun start                 # Start dev server
+bun run sync-version      # Sync version from app.json
+bun run generate-icon     # Regenerate app icon
+bun run generate-click    # Regenerate click sounds
 ```
 
-## GitHub Releases
+## Acknowledgements
 
-Trigger the workflow manually in Actions tab. It builds an APK and creates a GitHub release tagged with the version from `app.json`. Changelog is auto-generated from commits since the last release.
-
-Requires `EXPO_TOKEN` secret in repo settings.
-
-## Detailed Docs
-
-See [CLAUDE.md](./CLAUDE.md) for complete component reference, patterns, and examples.
+Thanks <a href="https://github.com/vandamd">Vandam</a> for all your work!
