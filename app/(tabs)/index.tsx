@@ -1,12 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { View, StyleSheet, Modal, TextInput, Pressable } from "react-native";
-import { useAudioPlayer } from "expo-audio";
 import ContentContainer from "@/components/ContentContainer";
 import { StyledText } from "@/components/StyledText";
-import { useHaptic } from "@/contexts/HapticContext";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { MaterialIcons } from "@expo/vector-icons";
 import { n } from "@/utils/scaling";
+import { startMetronome } from "@/utils/metronome";
 
 export default function MetronomeScreen() {
   const [bpm, setBpm] = useState(120);
@@ -19,31 +18,14 @@ export default function MetronomeScreen() {
   const [timeSigTop, setTimeSigTop] = useState("4");
   const [timeSigBottom, setTimeSigBottom] = useState("4");
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const player = useAudioPlayer(require("@/assets/sounds/click.wav"));
-  const { triggerHaptic } = useHaptic();
   const { invertColors } = useInvertColors();
 
   const textColor = invertColors ? "black" : "white";
   const dimColor = invertColors ? "#555" : "#888";
 
-  const playClick = () => {
-    triggerHaptic();
-    player.seekTo(0);
-    player.play();
-  };
-
   useEffect(() => {
-    if (!isPlaying) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
-    }
-    const ms = Math.round(60000 / bpm);
-    playClick();
-    intervalRef.current = setInterval(playClick, ms);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
+    if (!isPlaying) return;
+    return startMetronome(bpm);
   }, [isPlaying, bpm]);
 
   const commitBpm = () => {
