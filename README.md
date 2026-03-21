@@ -4,7 +4,7 @@ A minimal metronome app for the Light Phone 3.
 
 ## Known issues
 
-There are latency issues when running over Bluetooth; using with speakers or wired headphones is recommended.
+There are latency issues when using this over Bluetooth. Using with speakers or wired headphones is recommended.
 
 ## Setup
 
