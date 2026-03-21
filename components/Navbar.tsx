@@ -60,7 +60,8 @@ const styles = StyleSheet.create({
     navbar: {
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-between",
+        justifyContent: "center",
+        gap: n(40),
         paddingVertical: n(11),
         paddingHorizontal: n(20),
     },
