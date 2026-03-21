@@ -37,12 +37,14 @@
             python3
             gnumake
             gcc
+            util-linux
           ];
 
           GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${sdk}/libexec/android-sdk/build-tools/35.0.0/aapt2";
 
           shellHook = ''
             export JAVA_HOME="${pkgs.jdk17}"
+            export LD_LIBRARY_PATH="${pkgs.util-linux.lib}/lib:$LD_LIBRARY_PATH"
             export ANDROID_HOME="${sdk}/libexec/android-sdk"
             export ANDROID_SDK_ROOT="$ANDROID_HOME"
             export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"

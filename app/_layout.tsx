@@ -1,18 +1,12 @@
 import React, { useEffect } from "react";
 import { Stack } from "expo-router";
-import { HapticProvider } from "../contexts/HapticContext";
 import { useFonts } from "expo-font";
 import { setStatusBarHidden } from "expo-status-bar";
-import {
-  InvertColorsProvider,
-  useInvertColors,
-} from "@/contexts/InvertColorsContext";
-import { DisplayModeProvider } from "@/contexts/DisplayModeContext";
+import { InvertColorsProvider, useInvertColors } from "@/contexts/InvertColorsContext";
 import { MetronomeHapticsProvider } from "@/contexts/MetronomeHapticsContext";
 import * as SystemUI from "expo-system-ui";
-import * as NavigationBar from 'expo-navigation-bar';
-import * as SplashScreen from 'expo-splash-screen';
-
+import * as NavigationBar from "expo-navigation-bar";
+import * as SplashScreen from "expo-splash-screen";
 
 function RootNavigation() {
   const { invertColors } = useInvertColors();
@@ -59,13 +53,9 @@ export default function RootLayout() {
 
   return (
     <InvertColorsProvider>
-      <DisplayModeProvider>
-        <HapticProvider>
-          <MetronomeHapticsProvider>
-            <RootNavigation />
-          </MetronomeHapticsProvider>
-        </HapticProvider>
-      </DisplayModeProvider>
+      <MetronomeHapticsProvider>
+        <RootNavigation />
+      </MetronomeHapticsProvider>
     </InvertColorsProvider>
   );
 }
