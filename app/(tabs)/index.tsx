@@ -73,13 +73,21 @@ export default function MetronomeScreen() {
           </StyledText>
         </Pressable>
 
-        <Pressable onPress={() => setIsPlaying((p) => !p)} style={styles.playButton}>
-          <MaterialIcons
-            name={isPlaying ? "pause" : "play-arrow"}
-            size={n(52)}
-            color={textColor}
-          />
-        </Pressable>
+        <View style={styles.controls}>
+          <Pressable onPress={() => setBpm((b) => Math.max(20, b - 5))}>
+            <MaterialIcons name="remove" size={n(36)} color={textColor} />
+          </Pressable>
+          <Pressable onPress={() => setIsPlaying((p) => !p)}>
+            <MaterialIcons
+              name={isPlaying ? "pause" : "play-arrow"}
+              size={n(52)}
+              color={textColor}
+            />
+          </Pressable>
+          <Pressable onPress={() => setBpm((b) => Math.min(300, b + 5))}>
+            <MaterialIcons name="add" size={n(36)} color={textColor} />
+          </Pressable>
+        </View>
       </View>
 
       <Modal visible={editingBpm} transparent animationType="fade">
@@ -154,7 +162,10 @@ const styles = StyleSheet.create({
   timeSig: {
     fontSize: n(28),
   },
-  playButton: {
+  controls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: n(32),
     marginTop: n(8),
   },
   overlay: {
