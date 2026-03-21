@@ -1,6 +1,10 @@
 <img src="assets/images/metronome.png" alt="Metronome">
 
-<p>A minimal metronome app for the Light Phone 3.</p>
+A minimal metronome app for the Light Phone 3.
+
+## Known issues
+
+There are latency issues when running over Bluetooth; using with speakers or wired headphones is recommended.
 
 ## Setup
 
@@ -25,4 +29,4 @@ bun run generate-click    # Regenerate click sounds
 
 ## Acknowledgements
 
-Thanks <a href="https://github.com/vandamd">Vandam</a> for all your work!
+Thanks [Vandam](https://github.com/vandamd) for all your work!
