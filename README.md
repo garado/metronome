@@ -1,4 +1,4 @@
-<img src="assets/images/example.png" alt="Example Template Screenshots">
+<img src="assets/images/metronome.png" alt="Metronome">
 
 <p>A minimal Expo template to create a LightOS-inspired app.</p>
 
