@@ -25,8 +25,12 @@ public class MetronomeModule extends ReactContextBaseJavaModule {
     private ScheduledFuture<?> tickTask = null;
     private SoundPool soundPool;
     private int soundId = -1;
+    private int accentSoundId = -1;
     private Vibrator vibrator;
     private boolean hapticsEnabled = true;
+    private boolean accentEnabled = true;
+    private int beatsPerMeasure = 4;
+    private int currentBeat = 0;
 
     MetronomeModule(ReactApplicationContext context) {
         super(context);
@@ -41,6 +45,8 @@ public class MetronomeModule extends ReactContextBaseJavaModule {
         try {
             AssetFileDescriptor afd = context.getAssets().openFd("sounds/click.wav");
             soundId = soundPool.load(afd, 1);
+            AssetFileDescriptor afdAccent = context.getAssets().openFd("sounds/click-accent.wav");
+            accentSoundId = soundPool.load(afdAccent, 1);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -58,8 +64,10 @@ public class MetronomeModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void start(double bpm) {
+    public void start(double bpm, int beats) {
         stop();
+        beatsPerMeasure = beats;
+        currentBeat = 0;
         long intervalMs = Math.round(60000.0 / bpm);
         tickTask = scheduler.scheduleAtFixedRate(
             this::tick, 0, intervalMs, TimeUnit.MILLISECONDS
@@ -75,7 +83,11 @@ public class MetronomeModule extends ReactContextBaseJavaModule {
     }
 
     private void tick() {
-        if (soundId != -1) {
+        boolean isAccent = currentBeat == 0 && accentEnabled;
+        currentBeat = (currentBeat + 1) % beatsPerMeasure;
+        if (isAccent && accentSoundId != -1) {
+            soundPool.play(accentSoundId, 1.0f, 1.0f, 1, 0, 1.0f);
+        } else if (soundId != -1) {
             soundPool.play(soundId, 1.0f, 1.0f, 1, 0, 1.0f);
         }
         if (hapticsEnabled && vibrator != null && vibrator.hasVibrator()) {
@@ -90,6 +102,11 @@ public class MetronomeModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void setHapticsEnabled(boolean enabled) {
         hapticsEnabled = enabled;
+    }
+
+    @ReactMethod
+    public void setAccentEnabled(boolean enabled) {
+        accentEnabled = enabled;
     }
 
     @ReactMethod

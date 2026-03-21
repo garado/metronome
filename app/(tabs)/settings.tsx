@@ -5,7 +5,7 @@ import { useMetronomeHaptics } from "@/contexts/MetronomeHapticsContext";
 import { n } from "@/utils/scaling";
 
 export default function SettingsScreen() {
-    const { hapticsEnabled, setHapticsEnabled } = useMetronomeHaptics();
+    const { hapticsEnabled, setHapticsEnabled, accentEnabled, setAccentEnabled } = useMetronomeHaptics();
 
     return (
         <ContentContainer headerTitle="Settings" hideBackButton>
@@ -14,6 +14,11 @@ export default function SettingsScreen() {
                     label="Haptics"
                     value={hapticsEnabled}
                     onValueChange={setHapticsEnabled}
+                />
+                <ToggleSwitch
+                    label="Downbeat accent"
+                    value={accentEnabled}
+                    onValueChange={setAccentEnabled}
                 />
             </View>
         </ContentContainer>

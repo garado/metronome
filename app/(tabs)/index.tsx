@@ -25,8 +25,8 @@ export default function MetronomeScreen() {
 
   useEffect(() => {
     if (!isPlaying) return;
-    return startMetronome(bpm);
-  }, [isPlaying, bpm]);
+    return startMetronome(bpm, beatsPerMeasure);
+  }, [isPlaying, bpm, beatsPerMeasure]);
 
   const commitBpm = () => {
     const val = parseInt(bpmInput);
