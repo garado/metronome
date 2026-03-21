@@ -31,6 +31,7 @@
           buildInputs = with pkgs; [
             bun
             nodejs_22
+            nodePackages.eas-cli
             jdk17
             android-tools
             sdk

@@ -21,7 +21,11 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
-    }
+      "router": {},
+      "eas": {
+        "projectId": "de7e25dc-6455-4228-a1ae-944a72aff049"
+      }
+    },
+    "owner": "agarado"
   }
 }
