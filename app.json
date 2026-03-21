@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "appname",
-    "slug": "appname",
+    "name": "metronome",
+    "slug": "metronome",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "appname",
+    "scheme": "metronome",
     "newArchEnabled": true,
     "icon": "./assets/images/icon.png",
     "android": {
       "backgroundColor": "#000000",
-      "package": "com.vandam.appname"
+      "package": "com.garado.metronome"
     },
     "plugins": [
       "expo-router",
