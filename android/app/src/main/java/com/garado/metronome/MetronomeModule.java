@@ -4,8 +4,12 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.os.VibratorManager;
 
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -39,7 +43,12 @@ public class MetronomeModule extends ReactContextBaseJavaModule {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            VibratorManager vm = (VibratorManager) context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
+            vibrator = vm != null ? vm.getDefaultVibrator() : null;
+        } else {
+            vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        }
     }
 
     @Override
@@ -69,7 +78,11 @@ public class MetronomeModule extends ReactContextBaseJavaModule {
             soundPool.play(soundId, 1.0f, 1.0f, 1, 0, 1.0f);
         }
         if (vibrator != null && vibrator.hasVibrator()) {
-            vibrator.vibrate(VibrationEffect.createOneShot(20, VibrationEffect.DEFAULT_AMPLITUDE));
+            new Handler(Looper.getMainLooper()).post(() ->
+                vibrator.vibrate(VibrationEffect.createWaveform(
+                    new long[]{0, 50}, new int[]{0, 30}, -1
+                ))
+            );
         }
     }
 
