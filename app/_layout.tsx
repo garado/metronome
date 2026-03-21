@@ -8,6 +8,7 @@ import {
     useInvertColors,
 } from "@/contexts/InvertColorsContext";
 import { DisplayModeProvider } from "@/contexts/DisplayModeContext";
+import { MetronomeHapticsProvider } from "@/contexts/MetronomeHapticsContext";
 import * as SystemUI from "expo-system-ui";
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -63,7 +64,9 @@ export default function RootLayout() {
         <InvertColorsProvider>
             <DisplayModeProvider>
                 <HapticProvider>
-                    <RootNavigation />
+                    <MetronomeHapticsProvider>
+                        <RootNavigation />
+                    </MetronomeHapticsProvider>
                 </HapticProvider>
             </DisplayModeProvider>
         </InvertColorsProvider>

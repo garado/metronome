@@ -26,6 +26,7 @@ public class MetronomeModule extends ReactContextBaseJavaModule {
     private SoundPool soundPool;
     private int soundId = -1;
     private Vibrator vibrator;
+    private boolean hapticsEnabled = true;
 
     MetronomeModule(ReactApplicationContext context) {
         super(context);
@@ -77,13 +78,18 @@ public class MetronomeModule extends ReactContextBaseJavaModule {
         if (soundId != -1) {
             soundPool.play(soundId, 1.0f, 1.0f, 1, 0, 1.0f);
         }
-        if (vibrator != null && vibrator.hasVibrator()) {
+        if (hapticsEnabled && vibrator != null && vibrator.hasVibrator()) {
             new Handler(Looper.getMainLooper()).post(() ->
                 vibrator.vibrate(VibrationEffect.createWaveform(
                     new long[]{0, 50}, new int[]{0, 30}, -1
                 ))
             );
         }
+    }
+
+    @ReactMethod
+    public void setHapticsEnabled(boolean enabled) {
+        hapticsEnabled = enabled;
     }
 
     @ReactMethod
