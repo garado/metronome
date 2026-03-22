@@ -12,27 +12,6 @@ The latest APK is available in [releases](https://github.com/garado/metronome/re
 
 I recommend using [Obtainium](https://github.com/ImranR98/Obtainium) and adding the repository's URL to receive updates.
 
-## Setup
-
-```bash
-# Enter development shell (if you're running Nix)
-nix develop
-```
-
-```bash
-bun install
-bunx expo run:android
-```
-
-## Commands
-
-```bash
-bun start                 # Start dev server
-bun run sync-version      # Sync version from app.json
-bun run generate-icon     # Regenerate app icon
-bun run generate-click    # Regenerate click sounds
-```
-
 ## Acknowledgements
 
 Thanks [Vandam](https://github.com/vandamd) for all your work!
