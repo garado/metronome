@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   input: {
     fontSize: n(64),
     fontFamily: "PublicSans-Regular",
-    width: n(120),
+    width: n(220),
     textAlign: "center",
   },
   slash: {
