@@ -6,7 +6,6 @@ import { StyledText } from "./StyledText";
 const NOTE_QUARTER = "\uE1D5";
 const NOTE_EIGHTH = "\uE1D7";
 const NOTE_SIXTEENTH = "\uE1D9";
-const HITBOX_SPACING = "   ";
 
 type Props = { subdivision: Subdivision; color: string; size?: number };
 
@@ -25,9 +24,9 @@ export function SubdivisionIcon({ subdivision, color, size = n(12) }: Props) {
 
     return (
       <View style={{ flexDirection: "row", alignItems: "flex-start", backgroundColor: "transparent" }}>
-        <Text style={[baseStyle, { fontSize: n(30), lineHeight: n(30), paddingTop: n(28) }]}>{HITBOX_SPACING}{NOTE_EIGHTH}</Text>
+        <Text style={[baseStyle, { fontSize: n(30), lineHeight: n(30), paddingTop: n(28) }]}>{NOTE_EIGHTH}</Text>
         <StyledText style={{ fontFamily: "PublicSans-Regular", color, fontSize: n(12), lineHeight: size * 0.8 }}>
-          {number}{HITBOX_SPACING}
+          {number}
         </StyledText>
       </View>
     );
@@ -39,7 +38,7 @@ export function SubdivisionIcon({ subdivision, color, size = n(12) }: Props) {
 
   return (
     <View style={{ height: size * 2, alignItems: "center", justifyContent: "center", backgroundColor: "transparent" }}>
-      <Text style={[baseStyle, { fontSize: n(30), lineHeight: n(30), paddingTop: n(26) }]}>{HITBOX_SPACING}{glyph}{HITBOX_SPACING}</Text>
+      <Text style={[baseStyle, { fontSize: n(30), lineHeight: n(30), paddingTop: n(26) }]}>{glyph}</Text>
     </View>
   );
 }

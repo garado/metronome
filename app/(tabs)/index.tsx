@@ -66,6 +66,7 @@ export default function MetronomeScreen() {
           </Pressable>
 
           <Pressable
+            hitSlop={{ top: n(32), bottom: n(32), left: n(32), right: n(32) }}
             onPress={() => router.push({
               pathname: "/subdivisions",
               params: { subdivision: subdivision }
