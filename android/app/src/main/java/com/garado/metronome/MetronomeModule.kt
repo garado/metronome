@@ -3,6 +3,7 @@ package com.garado.metronome
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFormat
+import android.media.AudioTimestamp
 import android.media.AudioTrack
 import android.os.Build
 import android.os.VibrationEffect
@@ -15,6 +16,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.concurrent.locks.LockSupport
 
 private const val SAMPLE_RATE = 44100
 
@@ -23,6 +25,7 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
     private val executor = Executors.newSingleThreadExecutor { r ->
         Thread(r).apply { priority = Thread.MAX_PRIORITY }
     }
+    private val hapticsExecutor = Executors.newSingleThreadExecutor()
     private var tickTask: Future<*>? = null
     private var audioTrack: AudioTrack? = null
 
@@ -63,25 +66,33 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
         track.play()
         track.write(ShortArray(minBuf / 2), 0, minBuf / 2) // prime pipeline
         var currentBeat = 0
+        var writePosition = (minBuf / 2).toLong()
+        val timestamp = AudioTimestamp()
+        val nsPerFrame = 1_000_000_000L / SAMPLE_RATE
 
         tickTask = executor.submit {
             while (!Thread.interrupted()) {
                 val samples = if (currentBeat == 0 && accentEnabled) accentSamples else clickSamples
                 currentBeat = (currentBeat + 1) % beats
 
-                // write click (clamped to interval length)
+                // schedule haptics to fire when the click actually plays
+                val clickPosition = writePosition
+                if (hapticsEnabled && vibrator?.hasVibrator() == true && track.getTimestamp(timestamp)) {
+                    val clickPresentationNs = timestamp.nanoTime + (clickPosition - timestamp.framePosition) * nsPerFrame
+                    hapticsExecutor.submit {
+                        val sleepNs = clickPresentationNs - System.nanoTime()
+                        if (sleepNs > 0) LockSupport.parkNanos(sleepNs)
+                        try {
+                            vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+                        } catch (e: Exception) { }
+                    }
+                }
+
                 val clickLen = minOf(samples.size, intervalSamples)
                 track.write(samples, 0, clickLen)
-
-                // write silence for the rest of the interval
                 val silenceLen = intervalSamples - clickLen
                 if (silenceLen > 0) track.write(silence, 0, silenceLen)
-
-                if (hapticsEnabled && vibrator?.hasVibrator() == true) {
-                    try {
-                        vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
-                    } catch (e: Exception) { }
-                }
+                writePosition += intervalSamples.toLong()
             }
         }
     }
