@@ -49,10 +49,13 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
         stop()
 
         val intervalSamples = ((60.0 / bpm) * SAMPLE_RATE).toInt()
-        val silence = ShortArray(intervalSamples)
+
+        // low-level dither to keep bluetooth codec hot between clicks
+        // prevents auto gain reduction by bt when it detects silence (makes clicks sound weird)
+        val silence = ShortArray(intervalSamples) { (Math.random() * 6 - 1).toInt().toShort() }
 
         val attrs = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_GAME)
+            .setUsage(AudioAttributes.USAGE_MEDIA)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
         val format = AudioFormat.Builder()
