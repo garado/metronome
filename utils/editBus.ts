@@ -1,6 +1,9 @@
-type EditResult =
+import { Subdivision } from "@/app/subdivisions";
+
+export type EditResult =
     | { field: "bpm"; value: number }
-    | { field: "timeSig"; top: number; bottom: number };
+    | { field: "timeSig"; top: number; bottom: number }
+    | { field: "subdivision"; value: Subdivision };
 
 let pending: EditResult | null = null;
 

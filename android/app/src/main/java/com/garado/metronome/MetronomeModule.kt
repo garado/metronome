@@ -31,6 +31,7 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
 
     private val clickSamples = loadWavPcm(context, "sounds/click.wav")
     private val accentSamples = loadWavPcm(context, "sounds/click-accent.wav")
+    private val subClickSamples = loadWavPcm(context, "sounds/click-sub.wav")
 
     private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
@@ -45,14 +46,16 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
     override fun getName() = "MetronomeModule"
 
     @ReactMethod
-    fun start(bpm: Double, beats: Int) {
+    fun start(bpm: Double, beats: Int, subdivisions: Int) {
         stop()
 
-        val intervalSamples = ((60.0 / bpm) * SAMPLE_RATE).toInt()
+        val beatSamples = ((60.0 / bpm) * SAMPLE_RATE).toInt()
+        val subSamples = beatSamples / subdivisions
 
-        // low-level dither to keep bluetooth codec hot between clicks
-        // prevents auto gain reduction by bt when it detects silence (makes clicks sound weird)
-        val silence = ShortArray(intervalSamples) { (Math.random() * 6 - 1).toInt().toShort() }
+        // subdivision click is quieter
+
+        // low-level dither to keep BT codec active between clicks
+        val silence = ShortArray(beatSamples) { (Math.random() * 6 - 1).toInt().toShort() }
 
         val attrs = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -75,10 +78,11 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
 
         tickTask = executor.submit {
             while (!Thread.interrupted()) {
-                val samples = if (currentBeat == 0 && accentEnabled) accentSamples else clickSamples
+                val isAccent = currentBeat == 0 && accentEnabled
                 currentBeat = (currentBeat + 1) % beats
 
-                // schedule haptics to fire when the click actually plays
+                // main beat click + haptics
+                val beatClick = if (isAccent) accentSamples else clickSamples
                 val clickPosition = writePosition
                 if (hapticsEnabled && vibrator?.hasVibrator() == true && track.getTimestamp(timestamp)) {
                     val clickPresentationNs = timestamp.nanoTime + (clickPosition - timestamp.framePosition) * nsPerFrame
@@ -91,11 +95,18 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
                     }
                 }
 
-                val clickLen = minOf(samples.size, intervalSamples)
-                track.write(samples, 0, clickLen)
-                val silenceLen = intervalSamples - clickLen
-                if (silenceLen > 0) track.write(silence, 0, silenceLen)
-                writePosition += intervalSamples.toLong()
+                val mainLen = minOf(beatClick.size, subSamples)
+                track.write(beatClick, 0, mainLen)
+                track.write(silence, 0, subSamples - mainLen)
+                writePosition += subSamples.toLong()
+
+                // subdivision clicks (no haptics)
+                for (i in 1 until subdivisions) {
+                    val subLen = minOf(subClickSamples.size, subSamples)
+                    track.write(subClickSamples, 0, subLen)
+                    track.write(silence, 0, subSamples - subLen)
+                    writePosition += subSamples.toLong()
+                }
             }
         }
     }

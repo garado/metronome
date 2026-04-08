@@ -2,8 +2,8 @@ import { NativeModules } from "react-native";
 
 const { MetronomeModule } = NativeModules;
 
-export function startMetronome(bpm: number, beatsPerMeasure: number) {
-    MetronomeModule.start(bpm, beatsPerMeasure);
+export function startMetronome(bpm: number, beatsPerMeasure: number, subdivisions: number = 1) {
+    MetronomeModule.start(bpm, beatsPerMeasure, subdivisions);
     return () => MetronomeModule.stop();
 }
 
