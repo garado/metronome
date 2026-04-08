@@ -4,6 +4,7 @@ import { useFonts } from "expo-font";
 import { setStatusBarHidden } from "expo-status-bar";
 import { InvertColorsProvider, useInvertColors } from "@/contexts/InvertColorsContext";
 import { MetronomeHapticsProvider } from "@/contexts/MetronomeHapticsContext";
+import { KeepAwakeProvider } from "@/contexts/KeepAwakeContext";
 import * as SystemUI from "expo-system-ui";
 import * as NavigationBar from "expo-navigation-bar";
 import * as SplashScreen from "expo-splash-screen";
@@ -56,7 +57,9 @@ export default function RootLayout() {
     return (
         <InvertColorsProvider>
             <MetronomeHapticsProvider>
-                <RootNavigation />
+                <KeepAwakeProvider>
+                    <RootNavigation />
+                </KeepAwakeProvider>
             </MetronomeHapticsProvider>
         </InvertColorsProvider>
     );

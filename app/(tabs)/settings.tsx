@@ -2,11 +2,13 @@ import { StyleSheet } from "react-native";
 import ContentContainer from "@/components/ContentContainer";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useMetronomeHaptics } from "@/contexts/MetronomeHapticsContext";
+import { useKeepAwake } from "@/contexts/KeepAwakeContext";
 import { n } from "@/utils/scaling";
 import * as Application from "expo-application";
 
 export default function SettingsScreen() {
   const { hapticsEnabled, setHapticsEnabled, accentEnabled, setAccentEnabled } = useMetronomeHaptics();
+  const { keepAwake, setKeepAwake } = useKeepAwake();
   const version = Application.nativeApplicationVersion;
 
   return (
@@ -24,6 +26,11 @@ export default function SettingsScreen() {
         label="Downbeat Accent"
         value={accentEnabled}
         onValueChange={setAccentEnabled}
+      />
+      <ToggleSwitch
+        label="Keep Screen Awake"
+        value={keepAwake}
+        onValueChange={setKeepAwake}
       />
     </ContentContainer>
   );
