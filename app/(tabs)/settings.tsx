@@ -3,12 +3,14 @@ import ContentContainer from "@/components/ContentContainer";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useMetronomeHaptics } from "@/contexts/MetronomeHapticsContext";
 import { useKeepAwake } from "@/contexts/KeepAwakeContext";
+import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { n } from "@/utils/scaling";
 import * as Application from "expo-application";
 
 export default function SettingsScreen() {
   const { hapticsEnabled, setHapticsEnabled, accentEnabled, setAccentEnabled } = useMetronomeHaptics();
   const { keepAwake, setKeepAwake } = useKeepAwake();
+  const { invertColors, setInvertColors } = useInvertColors();
   const version = Application.nativeApplicationVersion;
 
   return (
@@ -17,6 +19,11 @@ export default function SettingsScreen() {
       hideBackButton
       style={styles.container}
     >
+      <ToggleSwitch
+        label="Invert Colors"
+        value={invertColors}
+        onValueChange={setInvertColors}
+      />
       <ToggleSwitch
         label="Haptic Feedback"
         value={hapticsEnabled}
