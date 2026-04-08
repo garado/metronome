@@ -2,9 +2,12 @@
 
 A minimal metronome app for the Light Phone 3.
 
-## Known issues
+## Features
 
-There are latency issues when using this over Bluetooth. Using with speakers or wired headphones is recommended.
+- Editable BPM with incremental adjustment buttons
+- Optional downbeat emphasis
+- Note subdivisions
+- Haptic feedback on beat
 
 ## Installation
 
