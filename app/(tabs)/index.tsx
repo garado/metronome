@@ -124,10 +124,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: n(32),
   },
-  hint: {
-    fontSize: n(14),
-    marginTop: n(16),
-  },
   bpmContainer: {
     alignItems: "center",
   },
