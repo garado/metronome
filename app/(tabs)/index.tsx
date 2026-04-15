@@ -31,9 +31,12 @@ export default function MetronomeScreen() {
   const handleTap = () => {
     const now = Date.now();
     const last = taps.current[taps.current.length - 1];
+
+    // stop tap tempo session after certain time interval passes w/ no taps
     if (last && now - last > TAP_SESSION_TIMEOUT_MS) {
-      taps.current = []; // gap detected — start new session
+      taps.current = [];
     }
+
     taps.current = [...taps.current, now];
     if (taps.current.length < MIN_TAPS_TIL_TEMPO_SET) return;
     const intervals = taps.current.slice(1).map((t, i) => t - taps.current[i]);
@@ -60,60 +63,57 @@ export default function MetronomeScreen() {
   }, [isPlaying, bpm, beatsPerMeasure, subdivision]);
 
   return (
-    <Pressable onPress={handleTap} style={StyleSheet.absoluteFill}>
-      <ContentContainer style={{ alignItems: "stretch", paddingHorizontal: 0 }}>
-        <View style={styles.center}>
+    <ContentContainer style={{ alignItems: "stretch", paddingHorizontal: 0 }}>
+      <View style={styles.center}>
+        <Pressable
+          onPress={handleTap}
+          onLongPress={() => router.push({ pathname: "/edit", params: { field: "bpm", bpm: String(bpm) } })}
+          delayLongPress={400}
+          style={styles.bpmContainer}
+        >
+          <StyledText style={styles.bpm}>{bpm}</StyledText>
+        </Pressable>
+
+        <View style={styles.timeSigRow}>
           <Pressable
             onPress={() => router.push({
               pathname: "/edit",
-              params: { field: "bpm", bpm: String(bpm) },
+              params: { field: "timeSig", beatsPerMeasure: String(beatsPerMeasure), beatUnit: String(beatUnit) },
             })}
-            style={styles.bpmContainer}
           >
-            <StyledText style={styles.bpm}>{bpm}</StyledText>
+            <StyledText style={styles.timeSig}>
+              {beatsPerMeasure}/{beatUnit}
+            </StyledText>
           </Pressable>
 
-          <View style={styles.timeSigRow}>
-            <Pressable
-              onPress={() => router.push({
-                pathname: "/edit",
-                params: { field: "timeSig", beatsPerMeasure: String(beatsPerMeasure), beatUnit: String(beatUnit) },
-              })}
-            >
-              <StyledText style={styles.timeSig}>
-                {beatsPerMeasure}/{beatUnit}
-              </StyledText>
-            </Pressable>
-
-            <Pressable
-              hitSlop={{ top: n(32), bottom: n(32), left: n(32), right: n(32) }}
-              onPress={() => router.push({
-                pathname: "/subdivisions",
-                params: { subdivision: subdivision }
-              })}
-            >
-              <SubdivisionIcon subdivision={subdivision} color={textColor} size={n(36)} />
-            </Pressable>
-          </View>
-
-          <View style={styles.controls}>
-            <Pressable onPress={() => setBpm((b) => Math.max(20, b - 5))}>
-              <MaterialIcons name="remove" size={n(36)} color={textColor} />
-            </Pressable>
-            <Pressable onPress={() => setIsPlaying((p) => !p)}>
-              <MaterialIcons
-                name={isPlaying ? "pause" : "play-arrow"}
-                size={n(52)}
-                color={textColor}
-              />
-            </Pressable>
-            <Pressable onPress={() => setBpm((b) => Math.min(300, b + 5))}>
-              <MaterialIcons name="add" size={n(36)} color={textColor} />
-            </Pressable>
-          </View>
+          <Pressable
+            hitSlop={{ top: n(32), bottom: n(32), left: n(32), right: n(32) }}
+            onPress={() => router.push({
+              pathname: "/subdivisions",
+              params: { subdivision: subdivision }
+            })}
+          >
+            <SubdivisionIcon subdivision={subdivision} color={textColor} size={n(36)} />
+          </Pressable>
         </View>
-      </ContentContainer>
-    </Pressable>
+
+        <View style={styles.controls}>
+          <Pressable onPress={() => setBpm((b) => Math.max(20, b - 5))}>
+            <MaterialIcons name="remove" size={n(36)} color={textColor} />
+          </Pressable>
+          <Pressable onPress={() => setIsPlaying((p) => !p)}>
+            <MaterialIcons
+              name={isPlaying ? "pause" : "play-arrow"}
+              size={n(52)}
+              color={textColor}
+            />
+          </Pressable>
+          <Pressable onPress={() => setBpm((b) => Math.min(300, b + 5))}>
+            <MaterialIcons name="add" size={n(36)} color={textColor} />
+          </Pressable>
+        </View>
+      </View>
+    </ContentContainer>
   );
 }
 
@@ -123,6 +123,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: n(32),
+  },
+  hint: {
+    fontSize: n(14),
+    marginTop: n(16),
   },
   bpmContainer: {
     alignItems: "center",
