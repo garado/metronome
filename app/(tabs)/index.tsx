@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback } from "react";
@@ -12,6 +12,10 @@ import { SubdivisionIcon } from "@/components/SubdivisionIcon";
 import { startMetronome } from "@/utils/metronome";
 import { consumeEditResult } from "@/utils/editBus";
 
+// tap tempo constants
+const MIN_TAPS_TIL_TEMPO_SET = 4;
+const TAP_SESSION_TIMEOUT_MS = 3000;
+
 export default function MetronomeScreen() {
   const [bpm, setBpm] = useState(120);
   const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
@@ -20,7 +24,25 @@ export default function MetronomeScreen() {
   const [subdivision, setSubdivision] = useState(Subdivision.QUARTER);
 
   const { invertColors } = useInvertColors();
+  const taps = useRef<number[]>([]);
   const textColor = invertColors ? "black" : "white";
+
+  // tap on empty space to set tempo
+  const handleTap = () => {
+    const now = Date.now();
+    const last = taps.current[taps.current.length - 1];
+
+    // stop tap tempo session after certain time interval passes w/ no taps
+    if (last && now - last > TAP_SESSION_TIMEOUT_MS) {
+      taps.current = [];
+    }
+
+    taps.current = [...taps.current, now];
+    if (taps.current.length < MIN_TAPS_TIL_TEMPO_SET) return;
+    const intervals = taps.current.slice(1).map((t, i) => t - taps.current[i]);
+    const avg = intervals.reduce((a, b) => a + b) / intervals.length;
+    setBpm(Math.round(60000 / avg));
+  };
 
   useFocusEffect(useCallback(() => {
     const result = consumeEditResult();
@@ -44,10 +66,9 @@ export default function MetronomeScreen() {
     <ContentContainer style={{ alignItems: "stretch", paddingHorizontal: 0 }}>
       <View style={styles.center}>
         <Pressable
-          onPress={() => router.push({
-            pathname: "/edit",
-            params: { field: "bpm", bpm: String(bpm) },
-          })}
+          onPress={handleTap}
+          onLongPress={() => router.push({ pathname: "/edit", params: { field: "bpm", bpm: String(bpm) } })}
+          delayLongPress={400}
           style={styles.bpmContainer}
         >
           <StyledText style={styles.bpm}>{bpm}</StyledText>
