@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback } from "react";
@@ -12,6 +12,10 @@ import { SubdivisionIcon } from "@/components/SubdivisionIcon";
 import { startMetronome } from "@/utils/metronome";
 import { consumeEditResult } from "@/utils/editBus";
 
+// tap tempo constants
+const MIN_TAPS_TIL_TEMPO_SET = 4;
+const TAP_SESSION_TIMEOUT_MS = 3000;
+
 export default function MetronomeScreen() {
   const [bpm, setBpm] = useState(120);
   const [beatsPerMeasure, setBeatsPerMeasure] = useState(4);
@@ -20,7 +24,22 @@ export default function MetronomeScreen() {
   const [subdivision, setSubdivision] = useState(Subdivision.QUARTER);
 
   const { invertColors } = useInvertColors();
+  const taps = useRef<number[]>([]);
   const textColor = invertColors ? "black" : "white";
+
+  // tap on empty space to set tempo
+  const handleTap = () => {
+    const now = Date.now();
+    const last = taps.current[taps.current.length - 1];
+    if (last && now - last > TAP_SESSION_TIMEOUT_MS) {
+      taps.current = []; // gap detected — start new session
+    }
+    taps.current = [...taps.current, now];
+    if (taps.current.length < MIN_TAPS_TIL_TEMPO_SET) return;
+    const intervals = taps.current.slice(1).map((t, i) => t - taps.current[i]);
+    const avg = intervals.reduce((a, b) => a + b) / intervals.length;
+    setBpm(Math.round(60000 / avg));
+  };
 
   useFocusEffect(useCallback(() => {
     const result = consumeEditResult();
@@ -41,58 +60,60 @@ export default function MetronomeScreen() {
   }, [isPlaying, bpm, beatsPerMeasure, subdivision]);
 
   return (
-    <ContentContainer style={{ alignItems: "stretch", paddingHorizontal: 0 }}>
-      <View style={styles.center}>
-        <Pressable
-          onPress={() => router.push({
-            pathname: "/edit",
-            params: { field: "bpm", bpm: String(bpm) },
-          })}
-          style={styles.bpmContainer}
-        >
-          <StyledText style={styles.bpm}>{bpm}</StyledText>
-        </Pressable>
-
-        <View style={styles.timeSigRow}>
+    <Pressable onPress={handleTap} style={StyleSheet.absoluteFill}>
+      <ContentContainer style={{ alignItems: "stretch", paddingHorizontal: 0 }}>
+        <View style={styles.center}>
           <Pressable
             onPress={() => router.push({
               pathname: "/edit",
-              params: { field: "timeSig", beatsPerMeasure: String(beatsPerMeasure), beatUnit: String(beatUnit) },
+              params: { field: "bpm", bpm: String(bpm) },
             })}
+            style={styles.bpmContainer}
           >
-            <StyledText style={styles.timeSig}>
-              {beatsPerMeasure}/{beatUnit}
-            </StyledText>
+            <StyledText style={styles.bpm}>{bpm}</StyledText>
           </Pressable>
 
-          <Pressable
-            hitSlop={{ top: n(32), bottom: n(32), left: n(32), right: n(32) }}
-            onPress={() => router.push({
-              pathname: "/subdivisions",
-              params: { subdivision: subdivision }
-            })}
-          >
-            <SubdivisionIcon subdivision={subdivision} color={textColor} size={n(36)} />
-          </Pressable>
-        </View>
+          <View style={styles.timeSigRow}>
+            <Pressable
+              onPress={() => router.push({
+                pathname: "/edit",
+                params: { field: "timeSig", beatsPerMeasure: String(beatsPerMeasure), beatUnit: String(beatUnit) },
+              })}
+            >
+              <StyledText style={styles.timeSig}>
+                {beatsPerMeasure}/{beatUnit}
+              </StyledText>
+            </Pressable>
 
-        <View style={styles.controls}>
-          <Pressable onPress={() => setBpm((b) => Math.max(20, b - 5))}>
-            <MaterialIcons name="remove" size={n(36)} color={textColor} />
-          </Pressable>
-          <Pressable onPress={() => setIsPlaying((p) => !p)}>
-            <MaterialIcons
-              name={isPlaying ? "pause" : "play-arrow"}
-              size={n(52)}
-              color={textColor}
-            />
-          </Pressable>
-          <Pressable onPress={() => setBpm((b) => Math.min(300, b + 5))}>
-            <MaterialIcons name="add" size={n(36)} color={textColor} />
-          </Pressable>
+            <Pressable
+              hitSlop={{ top: n(32), bottom: n(32), left: n(32), right: n(32) }}
+              onPress={() => router.push({
+                pathname: "/subdivisions",
+                params: { subdivision: subdivision }
+              })}
+            >
+              <SubdivisionIcon subdivision={subdivision} color={textColor} size={n(36)} />
+            </Pressable>
+          </View>
+
+          <View style={styles.controls}>
+            <Pressable onPress={() => setBpm((b) => Math.max(20, b - 5))}>
+              <MaterialIcons name="remove" size={n(36)} color={textColor} />
+            </Pressable>
+            <Pressable onPress={() => setIsPlaying((p) => !p)}>
+              <MaterialIcons
+                name={isPlaying ? "pause" : "play-arrow"}
+                size={n(52)}
+                color={textColor}
+              />
+            </Pressable>
+            <Pressable onPress={() => setBpm((b) => Math.min(300, b + 5))}>
+              <MaterialIcons name="add" size={n(36)} color={textColor} />
+            </Pressable>
+          </View>
         </View>
-      </View>
-    </ContentContainer>
+      </ContentContainer>
+    </Pressable>
   );
 }
 
