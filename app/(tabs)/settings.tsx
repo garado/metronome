@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, View } from "react-native";
 import ContentContainer from "@/components/ContentContainer";
 import { ToggleSwitch } from "@/components/ToggleSwitch";
 import { useMetronomeHaptics } from "@/contexts/MetronomeHapticsContext";
@@ -6,6 +6,7 @@ import { useKeepAwake } from "@/contexts/KeepAwakeContext";
 import { useInvertColors } from "@/contexts/InvertColorsContext";
 import { n } from "@/utils/scaling";
 import * as Application from "expo-application";
+import { StyledText } from "@/components/StyledText";
 
 export default function SettingsScreen() {
   const { hapticsEnabled, setHapticsEnabled, accentEnabled, setAccentEnabled } = useMetronomeHaptics();
@@ -39,12 +40,21 @@ export default function SettingsScreen() {
         value={keepAwake}
         onValueChange={setKeepAwake}
       />
-    </ContentContainer>
+      <StyledText style={styles.usage}>
+        Multi-tap BPM to set tempo{"\n"}
+        Long-press BPM to edit manually
+      </StyledText>
+    </ContentContainer >
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     gap: n(20),
+  },
+  usage: {
+    width: "100%",
+    textAlign: "center",
+    marginTop: n(30),
   },
 });
