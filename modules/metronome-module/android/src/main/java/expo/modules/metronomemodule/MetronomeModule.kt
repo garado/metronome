@@ -1,4 +1,4 @@
-package com.garado.metronome
+package expo.modules.metronomemodule
 
 import android.content.Context
 import android.media.AudioAttributes
@@ -9,9 +9,8 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.bridge.ReactContextBaseJavaModule
-import com.facebook.react.bridge.ReactMethod
+import expo.modules.kotlin.modules.Module
+import expo.modules.kotlin.modules.ModuleDefinition
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.Executors
@@ -20,7 +19,7 @@ import java.util.concurrent.locks.LockSupport
 
 private const val SAMPLE_RATE = 44100
 
-class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaModule(context) {
+class MetronomeModule : Module() {
 
     private val executor = Executors.newSingleThreadExecutor { r ->
         Thread(r).apply { priority = Thread.MAX_PRIORITY }
@@ -29,30 +28,48 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
     private var tickTask: Future<*>? = null
     private var audioTrack: AudioTrack? = null
 
-    private val clickSamples = loadWavPcm(context, "sounds/click.wav")
-    private val accentSamples = loadWavPcm(context, "sounds/click-accent.wav")
-    private val subClickSamples = loadWavPcm(context, "sounds/click-sub.wav")
+    private val clickSamples by lazy { loadWavPcm("sounds/click.wav") }
+    private val accentSamples by lazy { loadWavPcm("sounds/click-accent.wav") }
+    private val subClickSamples by lazy { loadWavPcm("sounds/click-sub.wav") }
 
-    private val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
-    } else {
-        @Suppress("DEPRECATION")
-        context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    private val vibrator: Vibrator? by lazy {
+        val context = appContext.reactContext ?: return@lazy null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        }
     }
 
     private var hapticsEnabled = true
     private var accentEnabled = true
 
-    override fun getName() = "MetronomeModule"
+    override fun definition() = ModuleDefinition {
+        Name("MetronomeModule")
 
-    @ReactMethod
-    fun start(bpm: Double, beats: Int, subdivisions: Int) {
+        Function("start") { bpm: Double, beats: Int, subdivisions: Int ->
+            start(bpm, beats, subdivisions)
+        }
+
+        Function("stop") {
+            stop()
+        }
+
+        Function("setHapticsEnabled") { enabled: Boolean ->
+            hapticsEnabled = enabled
+        }
+
+        Function("setAccentEnabled") { enabled: Boolean ->
+            accentEnabled = enabled
+        }
+    }
+
+    private fun start(bpm: Double, beats: Int, subdivisions: Int) {
         stop()
 
         val beatSamples = ((60.0 / bpm) * SAMPLE_RATE).toInt()
         val subSamples = beatSamples / subdivisions
-
-        // subdivision click is quieter
 
         // low-level dither to keep BT codec active between clicks
         val silence = ShortArray(beatSamples) { (Math.random() * 6 - 1).toInt().toShort() }
@@ -81,7 +98,6 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
                 val isAccent = currentBeat == 0 && accentEnabled
                 currentBeat = (currentBeat + 1) % beats
 
-                // main beat click + haptics
                 val beatClick = if (isAccent) accentSamples else clickSamples
                 val clickPosition = writePosition
                 if (hapticsEnabled && vibrator?.hasVibrator() == true && track.getTimestamp(timestamp)) {
@@ -90,7 +106,7 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
                         val sleepNs = clickPresentationNs - System.nanoTime()
                         if (sleepNs > 0) LockSupport.parkNanos(sleepNs)
                         try {
-                            vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+                            vibrator!!.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
                         } catch (e: Exception) { }
                     }
                 }
@@ -111,8 +127,7 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
         }
     }
 
-    @ReactMethod
-    fun stop() {
+    private fun stop() {
         tickTask?.cancel(true)
         tickTask = null
         audioTrack?.stop()
@@ -120,20 +135,9 @@ class MetronomeModule(context: ReactApplicationContext) : ReactContextBaseJavaMo
         audioTrack = null
     }
 
-    @ReactMethod
-    fun setHapticsEnabled(enabled: Boolean) { hapticsEnabled = enabled }
-
-    @ReactMethod
-    fun setAccentEnabled(enabled: Boolean) { accentEnabled = enabled }
-
-    @ReactMethod
-    fun addListener(eventName: String) {}
-
-    @ReactMethod
-    fun removeListeners(count: Double) {}
-
-    private fun loadWavPcm(context: ReactApplicationContext, assetPath: String): ShortArray {
+    private fun loadWavPcm(assetPath: String): ShortArray {
         return try {
+            val context = appContext.reactContext ?: return ShortArray(0)
             val bytes = context.assets.open(assetPath).readBytes()
             // skip 44-byte WAV header, read remaining PCM data as 16-bit little-endian shorts
             val pcmBytes = bytes.copyOfRange(44, bytes.size)

@@ -1,6 +1,4 @@
-import { NativeModules } from "react-native";
-
-const { MetronomeModule } = NativeModules;
+import * as MetronomeModule from "@/modules/metronome-module";
 
 export function startMetronome(bpm: number, beatsPerMeasure: number, subdivisions: number = 1) {
   MetronomeModule.start(bpm, beatsPerMeasure, subdivisions);

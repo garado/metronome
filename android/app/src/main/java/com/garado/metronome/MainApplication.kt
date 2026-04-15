@@ -22,9 +22,7 @@ class MainApplication : Application(), ReactApplication {
       this,
       object : DefaultReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
-            PackageList(this).packages.apply {
-              add(MetronomePackage())
-            }
+            PackageList(this).packages
 
           override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"
 
