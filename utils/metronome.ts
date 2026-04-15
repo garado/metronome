@@ -3,18 +3,18 @@ import { NativeModules } from "react-native";
 const { MetronomeModule } = NativeModules;
 
 export function startMetronome(bpm: number, beatsPerMeasure: number, subdivisions: number = 1) {
-    MetronomeModule.start(bpm, beatsPerMeasure, subdivisions);
-    return () => MetronomeModule.stop();
+  MetronomeModule.start(bpm, beatsPerMeasure, subdivisions);
+  return () => MetronomeModule.stop();
 }
 
 export function stopMetronome() {
-    MetronomeModule.stop();
+  MetronomeModule.stop();
 }
 
 export function setHapticsEnabled(enabled: boolean) {
-    MetronomeModule.setHapticsEnabled(enabled);
+  MetronomeModule.setHapticsEnabled(enabled);
 }
 
 export function setAccentEnabled(enabled: boolean) {
-    MetronomeModule.setAccentEnabled(enabled);
+  MetronomeModule.setAccentEnabled(enabled);
 }
