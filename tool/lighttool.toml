@@ -1,0 +1,9 @@
+[tool]
+id = "dev.garado.template"
+label = "Light SDK Tool"
+versionCode = 1
+versionName = "0.1.0"
+permissions = ["android.permission.INTERNET"]
+# change if you run this on the emulator instead of a real LP3!
+serverPackage = "com.lightos"
+# serverPackage = "com.thelightphone.sdk.emulator"
