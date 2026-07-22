@@ -1,264 +1,200 @@
 package dev.garado.metronome
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.thelightphone.lp3Keyboard.ui.KeyboardOptions
 import com.thelightphone.sdk.InitialScreen
-import com.thelightphone.sdk.LightScreen
-import com.thelightphone.sdk.LightViewModel
 import com.thelightphone.sdk.SealedLightActivity
+import com.thelightphone.sdk.SimpleLightScreen
 import com.thelightphone.sdk.ui.LightBarButton
 import com.thelightphone.sdk.ui.LightBottomBar
 import com.thelightphone.sdk.ui.LightIcon
 import com.thelightphone.sdk.ui.LightIcons
 import com.thelightphone.sdk.ui.LightText
-import com.thelightphone.sdk.ui.LightTextField
-import com.thelightphone.sdk.ui.LightTextInputEditor
 import com.thelightphone.sdk.ui.LightTextVariant
 import com.thelightphone.sdk.ui.LightTheme
 import com.thelightphone.sdk.ui.LightThemeController
 import com.thelightphone.sdk.ui.LightThemeTokens
-import com.thelightphone.sdk.ui.LightTopBar
-import com.thelightphone.sdk.ui.LightTopBarCenter
 import com.thelightphone.sdk.ui.lightClickable
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
-enum class HomeTab { HELLO, WORLD, SETTINGS }
-
-data class SettingsOption(val label: String, val enabled: Boolean)
-
-class HomeScreenViewModel : LightViewModel<Unit>() {
-    private val _selectedTab = MutableStateFlow(HomeTab.HELLO)
-    val selectedTab: StateFlow<HomeTab> = _selectedTab.asStateFlow()
-
-    private val _settingsOptions = MutableStateFlow(
-        listOf(
-            SettingsOption("Invert Colors", enabled = false),
-        )
-    )
-    val settingsOptions: StateFlow<List<SettingsOption>> = _settingsOptions.asStateFlow()
-
-    private val _displayName = MutableStateFlow("")
-    val displayName: StateFlow<String> = _displayName.asStateFlow()
-
-    private val _isEditingName = MutableStateFlow(false)
-    val isEditingName: StateFlow<Boolean> = _isEditingName.asStateFlow()
-
-    // LightTextInputEditor caches its embedded keyboard's ViewModel by editorKey;
-    // bump this each time editing starts so a stale keyboard/TextFieldState pairing
-    // from a previous session isnt reused
-    private val _editSessionId = MutableStateFlow(0)
-    val editSessionId: StateFlow<Int> = _editSessionId.asStateFlow()
-
-    fun selectTab(tab: HomeTab) {
-        _selectedTab.value = tab
-    }
-
-    fun toggleSetting(label: String) {
-        _settingsOptions.value = _settingsOptions.value.map {
-            if (it.label == label) it.copy(enabled = !it.enabled) else it
-        }
-    }
-
-    fun startEditingName() {
-        _editSessionId.value += 1
-        _isEditingName.value = true
-    }
-
-    fun submitName(value: CharSequence) {
-        _displayName.value = value.toString()
-        _isEditingName.value = false
-    }
-
-    fun cancelEditingName() {
-        _isEditingName.value = false
-    }
-}
+private val TRANSPORT_ICON_SIZE = 40.dp
+private val TRANSPORT_BAR_THICKNESS = 3.dp
+private val TRANSPORT_BAR_LENGTH_FRACTION = 0.6f
+private val SUBDIVISION_ICON_SIZE = 22.dp
 
 @InitialScreen
-class HomeScreen(sealedActivity: SealedLightActivity) : LightScreen<Unit, HomeScreenViewModel>(sealedActivity) {
-
-    override val viewModelClass: Class<HomeScreenViewModel>
-        get() = HomeScreenViewModel::class.java
-
-    override fun createViewModel(): HomeScreenViewModel {
-        return HomeScreenViewModel()
-    }
+class HomeScreen(sealedActivity: SealedLightActivity) : SimpleLightScreen<Unit>(sealedActivity) {
 
     @Composable
     override fun Content() {
-        val selectedTab by viewModel.selectedTab.collectAsState()
-        val settingsOptions by viewModel.settingsOptions.collectAsState()
-        val displayName by viewModel.displayName.collectAsState()
-        val isEditingName by viewModel.isEditingName.collectAsState()
-        val editSessionId by viewModel.editSessionId.collectAsState()
+        val bpm by MetronomeState.bpm.collectAsState()
+        val isPlaying by MetronomeState.isPlaying.collectAsState()
+        val subdivision by MetronomeState.subdivision.collectAsState()
+        val timeSignature by MetronomeState.timeSignature.collectAsState()
         val themeColors by LightThemeController.colors.collectAsState()
 
         LightTheme(colors = themeColors) {
-            if (isEditingName) {
-                val nameFieldState = rememberTextFieldState(displayName)
-                val keyboardOptionsFlow = remember {
-                    MutableStateFlow(KeyboardOptions(emptyList(), true, false, true))
-                }
-
-                LightTextInputEditor(
-                    title = "Display Name",
-                    state = nameFieldState,
-                    onSubmit = { viewModel.submitName(it) },
-                    onBack = { viewModel.cancelEditingName() },
-                    keyboardOptionsFlow = keyboardOptionsFlow,
-                    singleLine = true,
-                    editorKey = editSessionId,
-                )
-            } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(LightThemeTokens.colors.background),
+            ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(LightThemeTokens.colors.background),
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    if (selectedTab == HomeTab.SETTINGS) {
-                        LightTopBar(center = LightTopBarCenter.Text("Settings"))
-                    }
+                    // BPM
+                    LightText(
+                        text = bpm.toString(),
+                        variant = LightTextVariant.Title,
+                        modifier = Modifier.lightClickable { navigateTo(::EditBpmScreen) },
+                    )
 
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 32.dp)
-                            .padding(
-                                top = if (selectedTab == HomeTab.SETTINGS) 0.dp else 16.dp,
-                                bottom = 16.dp,
-                            ),
+                    // Play + pause
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(40.dp),
+                        modifier = Modifier.padding(vertical = 24.dp),
                     ) {
-                        when (selectedTab) {
-                            HomeTab.HELLO -> HelloTabContent()
-                            HomeTab.WORLD -> WorldTabContent()
-                            HomeTab.SETTINGS -> SettingsTabContent(
-                                options = settingsOptions,
-                                displayName = displayName,
-                                onToggle = viewModel::toggleSetting,
-                                onAboutClick = { navigateTo(::AboutScreen) },
-                                onEditName = { viewModel.startEditingName() },
-                            )
-                        }
+                        MinusSymbol(
+                            modifier = Modifier.lightClickable { MetronomeState.decrementBpm() },
+                        )
+                        LightIcon(
+                            icon = if (isPlaying) LightIcons.PAUSE else LightIcons.PLAY,
+                            modifier = Modifier
+                                .size(30.dp)
+                                .lightClickable { MetronomeState.togglePlaying() },
+                        )
+                        PlusSymbol(
+                            modifier = Modifier.lightClickable { MetronomeState.incrementBpm() },
+                        )
                     }
 
-                    HomeBottomBar(onSelectTab = viewModel::selectTab)
+
+                    // Time division + note subdivision
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 36.dp),
+                    ) {
+                        LightText(
+                            text = timeSignature.toString(),
+                            variant = LightTextVariant.Copy,
+                            modifier = Modifier.lightClickable { navigateTo(::EditTimeSignatureScreen) },
+                        )
+                        SubdivisionIndicator(
+                            subdivision = subdivision,
+                            modifier = Modifier
+                                .padding(start = 20.dp)
+                                .lightClickable { navigateTo(::SubdivisionsScreen) },
+                        )
+                    }
                 }
+
+                HomeBottomBar(
+                    onSettingsClick = { navigateTo(::SettingsScreen) },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun HelloTabContent() {
-    LightText(text = "Hello", variant = LightTextVariant.Heading)
-}
-
-@Composable
-private fun WorldTabContent() {
-    LightText(text = "World", variant = LightTextVariant.Heading)
-}
-
-@Composable
-private fun SettingsTabContent(
-    options: List<SettingsOption>,
-    displayName: String,
-    onToggle: (String) -> Unit,
-    onAboutClick: () -> Unit,
-    onEditName: () -> Unit,
-) {
-    LazyColumn {
-        item {
-            LightTextField(
-                label = "Display Name",
-                value = displayName,
-                placeholder = "Enter your name",
-                onClick = onEditName,
-                modifier = Modifier.padding(bottom = 12.dp),
-            )
-        }
-
-        items(options) { option ->
-            SettingsToggleRow(
-                option = option,
-                onClick = { onToggle(option.label) },
-            )
-        }
-
-        item {
-            SettingsNavigationRow(
-                label = "About",
-                onClick = onAboutClick,
-            )
-        }
+private fun SubdivisionIndicator(subdivision: Subdivision, modifier: Modifier = Modifier) {
+    val tint = LightThemeTokens.colors.content
+    val (drawableId, superscript) = when (subdivision) {
+        Subdivision.QUARTER -> R.drawable.ic_note_quarter to null
+        Subdivision.EIGHTH -> R.drawable.ic_note to null
+        Subdivision.SIXTEENTH -> R.drawable.ic_note_16th to null
+        Subdivision.TRIPLET -> R.drawable.ic_note to "3"
+        Subdivision.QUINTUPLET -> R.drawable.ic_note to "5"
+        Subdivision.SEXTUPLET -> R.drawable.ic_note to "6"
     }
-}
 
-@Composable
-private fun SettingsToggleRow(option: SettingsOption, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .lightClickable(onClick = onClick)
-            .padding(vertical = 12.dp),
-    ) {
-        LightIcon(
-            icon = if (option.enabled) LightIcons.TOGGLE_STATE_ON else LightIcons.TOGGLE_STATE_OFF,
-            modifier = Modifier.padding(end = 16.dp),
+    Box(modifier = modifier) {
+        Image(
+            painter = tintedPainter(drawableId, tint),
+            contentDescription = subdivision.label,
+            modifier = Modifier.size(SUBDIVISION_ICON_SIZE),
         )
-        LightText(text = option.label, variant = LightTextVariant.Copy)
+        if (superscript != null) {
+            LightText(
+                text = superscript,
+                variant = LightTextVariant.Superfine,
+                modifier = Modifier.align(Alignment.TopEnd).padding(start = 20.dp),
+            )
+        }
     }
 }
 
 @Composable
-private fun SettingsNavigationRow(label: String, onClick: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .lightClickable(onClick = onClick)
-            .padding(vertical = 12.dp),
+private fun MinusSymbol(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.size(TRANSPORT_ICON_SIZE),
+        contentAlignment = Alignment.Center,
     ) {
-        LightText(text = label, variant = LightTextVariant.Copy, modifier = Modifier.weight(1f))
-        LightIcon(icon = LightIcons.ARROW_RIGHT)
+        Bar(horizontal = true)
     }
 }
 
 @Composable
-private fun HomeBottomBar(onSelectTab: (HomeTab) -> Unit) {
+private fun PlusSymbol(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.size(TRANSPORT_ICON_SIZE),
+        contentAlignment = Alignment.Center,
+    ) {
+        Bar(horizontal = true)
+        Bar(horizontal = false)
+    }
+}
+
+@Composable
+private fun Bar(horizontal: Boolean) {
+    Box(
+        modifier = if (horizontal) {
+            Modifier
+                .fillMaxWidth(TRANSPORT_BAR_LENGTH_FRACTION)
+                .height(TRANSPORT_BAR_THICKNESS)
+        } else {
+            Modifier
+                .fillMaxHeight(TRANSPORT_BAR_LENGTH_FRACTION)
+                .width(TRANSPORT_BAR_THICKNESS)
+        }.background(LightThemeTokens.colors.content),
+    )
+}
+
+@Composable
+private fun HomeBottomBar(onSettingsClick: () -> Unit) {
     LightBottomBar(
         items = listOf(
-            LightBarButton.LightIcon(
-                icon = LightIcons.COMPOSE_MESSAGE,
-                contentDescription = "Hello",
-                onClick = { onSelectTab(HomeTab.HELLO) },
-            ),
-            LightBarButton.LightIcon(
-                icon = LightIcons.MAP,
-                contentDescription = "World",
-                onClick = { onSelectTab(HomeTab.WORLD) },
+            LightBarButton.Icon(
+                painter = tintedPainter(R.drawable.ic_note, LightThemeTokens.colors.content),
+                contentDescription = "Metronome",
+                onClick = {},
             ),
             LightBarButton.LightIcon(
                 icon = LightIcons.SETTINGS,
                 contentDescription = "Settings",
-                onClick = { onSelectTab(HomeTab.SETTINGS) },
+                onClick = onSettingsClick,
             ),
         ),
     )
